@@ -1,0 +1,79 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function changedKeys() {
+      return request.resource.data.diff(resource.data).affectedKeys();
+    }
+
+    // ---- Parent account docs ----
+    match /users/{uid} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+
+    // ---- Student profiles ----
+    match /students/{studentId} {
+      function isParent() {
+        return signedIn() && request.auth.uid == resource.data.familyId;
+      }
+      function isOwnerStudent() {
+        return signedIn() && request.auth.uid == studentId;
+      }
+
+      allow read: if isParent() || isOwnerStudent();
+
+      // Parent (or admin SDK) creates the profile.
+      allow create: if signedIn()
+                    && request.auth.uid == request.resource.data.familyId;
+
+      // Parent may edit fully; the student may only write their own
+      // assessment results — never their credentials or family link.
+      allow update: if isParent()
+                    || (isOwnerStudent()
+                        && changedKeys().hasOnly(
+                             ['mbtiType', 'dimensionScores', 'assessmentCompletedAt']));
+
+      allow delete: if isParent();
+
+      // ---- Tasks for a student ----
+      match /tasks/{taskId} {
+        function taskParent() {
+          return signedIn() && request.auth.uid == resource.data.familyId;
+        }
+        function isThisStudent() {
+          return signedIn() && request.auth.uid == studentId;
+        }
+        // Path-based parent check (no resource.data) so list queries are allowed.
+        function isParentByPath() {
+          return signedIn()
+                 && request.auth.uid ==
+                    get(/databases/$(database)/documents/students/$(studentId)).data.familyId;
+        }
+
+        allow read: if isThisStudent() || isParentByPath();
+
+        // Student snapshots their plan on completion; parent may also create.
+        allow create: if signedIn()
+                      && (request.auth.uid == studentId
+                          || request.auth.uid == request.resource.data.familyId);
+
+        // Parent may confirm/edit any task. A student may ONLY mark their own
+        // student-assigned task as done — they cannot CONFIRM (parent is the
+        // source of truth on completion).
+        allow update: if taskParent()
+                      || (isThisStudent()
+                          && resource.data.assignee == 'student'
+                          && resource.data.status == 'TODO'
+                          && request.resource.data.status == 'STUDENT_DONE'
+                          && changedKeys().hasOnly(['status', 'studentMarkedAt']));
+
+        allow delete: if taskParent();
+      }
+    }
+  }
+}

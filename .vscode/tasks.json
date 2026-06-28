@@ -1,0 +1,57 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Emulators",
+      "detail": "Firebase Auth + Firestore emulators (Java PATH handled; data persists across restarts)",
+      "type": "shell",
+      "command": "npm run emulators",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "test-workflow",
+        "panel": "dedicated",
+        "reveal": "always",
+        "focus": false
+      }
+    },
+    {
+      "label": "Dev server",
+      "detail": "Next.js dev server at http://localhost:3000",
+      "type": "shell",
+      "command": "npm run dev",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "test-workflow",
+        "panel": "dedicated",
+        "reveal": "always",
+        "focus": false
+      }
+    },
+    {
+      "label": "Seed test student",
+      "detail": "Create the fixed test student (login TEST01 / PIN 1234) — run while emulators are up",
+      "type": "shell",
+      "command": "npm run seed",
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always",
+        "focus": true,
+        "close": false
+      }
+    },
+    {
+      "label": "Test: emulators + dev",
+      "detail": "Starts the emulators and the dev server together in split terminals",
+      "dependsOn": ["Emulators", "Dev server"],
+      "dependsOrder": "parallel",
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    }
+  ]
+}

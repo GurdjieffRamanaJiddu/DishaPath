@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="DishaPath">
+  <rect width="512" height="512" fill="#4f46e5"/>
+  <path d="M256 136 L292 220 L384 226 L312 284 L334 374 L256 324 L178 374 L200 284 L128 226 L220 220 Z" fill="#f59e0b"/>
+  <circle cx="256" cy="256" r="34" fill="#ffffff"/>
+</svg>
