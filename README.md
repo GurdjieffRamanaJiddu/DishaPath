@@ -65,7 +65,7 @@ code + PIN) keeps working across restarts. **Stop the emulator with `Ctrl+C`** â
 hard kill skips the export, so the data won't be saved. (Delete `emulator-data/` to
 start fresh.)
 
-#### Quick test login (skip the parent flow)
+#### Quick test login
 
 With the emulators running, seed a fixed test student:
 
@@ -73,16 +73,16 @@ With the emulators running, seed a fixed test student:
 npm run seed
 ```
 
-Then go to **Student login** and use:
+**Student login:**
+- **Login code:** `TEST01`
+- **PIN:** `1234`
 
-| Field | Value |
-|---|---|
-| Login code (user id) | `TEST01` |
-| PIN (password) | `1234` |
+**Parent login (development mode):**
+- **Phone:** `9876543210` (enter just the 10 digits; +91 is shown by the form)
+- **OTP:** Any value (auto-filled as `000000` in emulator, then verified via dev endpoint)
 
-It also creates a parent (phone `+911111100000`) with consent already given, so you
-can test the parent side via OTP too. Re-run `npm run seed` any time after a fresh
-emulator start (it's safe to re-run; it won't wipe an existing assessment).
+Re-run `npm run seed` any time after a fresh emulator start (it's safe to re-run; it
+won't wipe an existing assessment).
 
 #### Review all 16 report variants
 
@@ -92,14 +92,19 @@ To preview every personality type at once, seed one fully-assessed student per t
 npm run seed:all
 ```
 
-This creates 16 students (all under one test parent) and needs only the emulator
-running (no dev server). Then:
+This creates 16 students (all under one test parent) with the emulator. Then:
 
-- **As a parent:** log in with phone `9876543210` (OTP shown in the emulator) to see
-  all 16 children on your dashboard, each with a "View report" link, so you can open
-  every report variant.
-- **As a student:** the login code is the **type code itself**, with PIN `1234`. For
-  example `INTJ` / `1234`, `ENFP` / `1234`, `ESFP` / `1234`, and so on for all 16.
+**Parent login (development mode):**
+- **Phone:** `9876543210`
+- **OTP:** Any value (auto-filled in emulator)
+- See all 16 children on your dashboard with "View report" links
+
+**Student logins (one per MBTI type):**
+Each uses its **type code** as login code + PIN `1234`:
+- `INTJ` / `1234`
+- `ENFP` / `1234`
+- `ESFP` / `1234`
+- ... all 16 types
 
 Then walk the flow:
 
