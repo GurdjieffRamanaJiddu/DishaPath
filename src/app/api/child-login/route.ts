@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
-import { adminAuth, adminDb } from "@/lib/firebase/admin";
+import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 import { verifyPin } from "@/lib/crypto";
 
 export async function POST(req: Request) {
   try {
+    const adminDb = getAdminDb();
+    const adminAuth = getAdminAuth();
     const body = await req.json().catch(() => null);
     const loginCode =
       typeof body?.loginCode === "string" ? body.loginCode.trim().toUpperCase() : "";

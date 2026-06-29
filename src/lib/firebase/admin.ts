@@ -6,41 +6,61 @@ import {
   cert,
   applicationDefault,
   type App,
-  type AppOptions,
 } from "firebase-admin/app";
-import { getAuth } from "firebase-admin/auth";
-import { getFirestore } from "firebase-admin/firestore";
+import { getAuth, type Auth } from "firebase-admin/auth";
+import { getFirestore, type Firestore } from "firebase-admin/firestore";
 
-// When the emulator host vars are set, the Admin SDK talks to the local
-// emulators and does not need real service-account credentials.
-const usingEmulator = !!process.env.FIREBASE_AUTH_EMULATOR_HOST;
+// Accept the service account as raw JSON or base64-encoded JSON (base64 is
+// paste-safe in dashboards: no quotes, braces, or newlines to mangle).
+function loadServiceAccount(): Record<string, unknown> | null {
+  const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
+  if (!raw) return null;
+  const trimmed = raw.trim();
+  const text = trimmed.startsWith("{")
+    ? trimmed
+    : Buffer.from(trimmed, "base64").toString("utf8");
+  const parsed = JSON.parse(text) as Record<string, unknown>;
+  // Some hosts store the private key with literal "\n" instead of real
+  // newlines; normalize so cert() can parse it.
+  if (typeof parsed.private_key === "string") {
+    parsed.private_key = parsed.private_key.replace(/\\n/g, "\n");
+  }
+  return parsed;
+}
 
-function buildOptions(): AppOptions {
-  const projectId =
+function buildApp(): App {
+  if (getApps().length) return getApp();
+
+  const usingEmulator = !!process.env.FIREBASE_AUTH_EMULATOR_HOST;
+  const fallbackProjectId =
     process.env.FIREBASE_PROJECT_ID ??
     process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ??
     "edu-app-demo";
 
-  if (usingEmulator) {
-    return { projectId };
-  }
+  if (usingEmulator) return initializeApp({ projectId: fallbackProjectId });
 
-  // Production: prefer an inline JSON service account, else ADC.
-  const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
-  if (raw) {
-    const parsed = JSON.parse(raw);
-    // Some hosts (e.g. pasting into a dashboard) store the private key with
-    // literal "\n" sequences instead of real newlines; normalize so cert() can
-    // parse the key.
-    if (typeof parsed.private_key === "string") {
-      parsed.private_key = parsed.private_key.replace(/\\n/g, "\n");
-    }
-    return { credential: cert(parsed), projectId: parsed.project_id ?? projectId };
+  const sa = loadServiceAccount();
+  if (sa) {
+    return initializeApp({
+      credential: cert(sa as never),
+      projectId: (sa.project_id as string) ?? fallbackProjectId,
+    });
   }
-  return { credential: applicationDefault(), projectId };
+  return initializeApp({
+    credential: applicationDefault(),
+    projectId: fallbackProjectId,
+  });
 }
 
-const app: App = getApps().length ? getApp() : initializeApp(buildOptions());
+// Lazy singletons: initialize on first use (inside route handlers, where errors
+// are catchable) rather than at module load (which would 500 the whole route).
+let _auth: Auth | null = null;
+let _db: Firestore | null = null;
 
-export const adminAuth = getAuth(app);
-export const adminDb = getFirestore(app);
+export function getAdminAuth(): Auth {
+  return (_auth ??= getAuth(buildApp()));
+}
+
+export function getAdminDb(): Firestore {
+  return (_db ??= getFirestore(buildApp()));
+}

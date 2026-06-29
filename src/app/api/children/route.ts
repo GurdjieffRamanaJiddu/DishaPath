@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { adminAuth, adminDb } from "@/lib/firebase/admin";
+import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 import {
   generateLoginCode,
   generatePin,
@@ -8,6 +8,7 @@ import {
 import { GRADES, type Grade, type Locale } from "@/lib/types";
 
 async function uniqueLoginCode(): Promise<string> {
+  const adminDb = getAdminDb();
   for (let i = 0; i < 10; i++) {
     const code = generateLoginCode();
     const existing = await adminDb
@@ -30,11 +31,13 @@ export async function POST(req: Request) {
 
   let parentUid: string;
   try {
-    const decoded = await adminAuth.verifyIdToken(idToken);
+    const decoded = await getAdminAuth().verifyIdToken(idToken);
     parentUid = decoded.uid;
   } catch {
     return NextResponse.json({ error: "invalid token" }, { status: 401 });
   }
+
+  const adminDb = getAdminDb();
 
   const body = await req.json().catch(() => null);
   const name = typeof body?.name === "string" ? body.name.trim() : "";

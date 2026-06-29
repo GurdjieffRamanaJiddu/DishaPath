@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { adminAuth } from "@/lib/firebase/admin";
+import { getAdminAuth } from "@/lib/firebase/admin";
 
 // Development-only endpoint: bypass OTP for test parent account in emulator
 export async function POST() {
@@ -12,7 +12,7 @@ export async function POST() {
   }
 
   try {
-    const token = await adminAuth.createCustomToken("test-parent", {
+    const token = await getAdminAuth().createCustomToken("test-parent", {
       role: "parent",
     });
 
