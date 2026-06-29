@@ -1,5 +1,5 @@
 // Minimal offline-shell service worker for DishaPath.
-const CACHE = "dishapath-v1";
+const CACHE = "dishapath-v2";
 const APP_SHELL = ["/", "/en", "/hi", "/manifest.webmanifest", "/icons/icon.svg"];
 
 self.addEventListener("install", (event) => {
@@ -23,6 +23,11 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   if (request.method !== "GET") return;
+
+  // Only handle same-origin requests. Never intercept third-party resources
+  // (reCAPTCHA, Firebase Identity Toolkit, analytics) so the browser handles
+  // them normally.
+  if (new URL(request.url).origin !== self.location.origin) return;
 
   // Network-first for page navigations, falling back to cache when offline.
   if (request.mode === "navigate") {
