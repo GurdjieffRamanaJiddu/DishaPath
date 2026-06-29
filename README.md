@@ -129,6 +129,13 @@ npm run typecheck
 npm run build
 ```
 
+## Deploy a public URL (Vercel + Firebase)
+
+To put the app on a shareable `*.vercel.app` URL that anyone can test in a browser
+(no local setup), follow **[DEPLOY.md](DEPLOY.md)**. It uses a real Firebase project
+with a free **test phone number** for parent login, and `npm run seed:prod` to seed
+the 16 typed students into the live database.
+
 ## Production setup (real Firebase project)
 
 1. Create a Firebase project; enable **Authentication → Phone** and **Firestore**.

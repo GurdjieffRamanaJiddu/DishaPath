@@ -8,12 +8,19 @@
 //
 // Run while the emulators are running:  npm run seed:all
 import { createHash } from "node:crypto";
-import { initializeApp, getApps } from "firebase-admin/app";
+import { initializeApp, getApps, cert } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
 
-if (!process.env.FIRESTORE_EMULATOR_HOST) {
-  console.error("FIRESTORE_EMULATOR_HOST is not set. Start the emulators first, then run `npm run seed:all`.");
+// Target: the local emulator (FIRESTORE_EMULATOR_HOST) or a real Firebase
+// project (FIREBASE_SERVICE_ACCOUNT). `npm run seed:all` uses the emulator;
+// `npm run seed:prod` loads .env.prod with a service account.
+const usingEmulator = !!process.env.FIRESTORE_EMULATOR_HOST;
+const serviceAccountRaw = process.env.FIREBASE_SERVICE_ACCOUNT;
+if (!usingEmulator && !serviceAccountRaw) {
+  console.error(
+    "Set FIRESTORE_EMULATOR_HOST (emulator) or FIREBASE_SERVICE_ACCOUNT (real project) before seeding.",
+  );
   process.exit(1);
 }
 
@@ -42,7 +49,13 @@ function scoresFor(type) {
   };
 }
 
-const app = getApps().length ? getApps()[0] : initializeApp({ projectId });
+const appOptions = usingEmulator
+  ? { projectId }
+  : (() => {
+      const parsed = JSON.parse(serviceAccountRaw);
+      return { credential: cert(parsed), projectId: parsed.project_id ?? projectId };
+    })();
+const app = getApps().length ? getApps()[0] : initializeApp(appOptions);
 const db = getFirestore(app);
 const auth = getAuth(app);
 const now = Date.now();
@@ -76,7 +89,8 @@ for (const type of MBTI_TYPES) {
   );
 }
 
-console.log(`Seeded ${MBTI_TYPES.length} test students, one per MBTI type.`);
+const target = usingEmulator ? "the local emulator" : `the live project "${projectId}"`;
+console.log(`Seeded ${MBTI_TYPES.length} test students into ${target}.`);
 console.log("");
 console.log("PARENT: log in with phone 9876543210 to see all 16 reports.");
 console.log("STUDENT: login code is the type name, PIN 1234. For example:");

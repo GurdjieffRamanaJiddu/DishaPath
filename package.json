@@ -13,6 +13,7 @@
     "emulators": "bash scripts/emulators.sh",
     "seed": "node --env-file=.env.local scripts/seed.mjs",
     "seed:all": "node --env-file=.env.local scripts/seed-all.mjs",
+    "seed:prod": "node --env-file=.env.prod scripts/seed-all.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
