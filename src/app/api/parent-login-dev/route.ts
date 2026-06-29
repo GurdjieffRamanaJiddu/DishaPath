@@ -12,7 +12,7 @@ export async function POST() {
   }
 
   try {
-    const token = await getAdminAuth().createCustomToken("test-parent", {
+    const token = await (await getAdminAuth()).createCustomToken("test-parent", {
       role: "parent",
     });
 

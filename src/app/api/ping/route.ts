@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
   const info: Record<string, unknown> = {
-    marker: "ping-v2-external",
+    marker: "ping-v3-noauth",
     node: process.version,
     appSecretSet: !!process.env.APP_SECRET,
     projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? null,

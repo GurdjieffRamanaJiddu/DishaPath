@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
+import { signCustomToken } from "@/lib/firebase/customToken";
 import { verifyPin } from "@/lib/crypto";
 
 export async function POST(req: Request) {
   try {
     const adminDb = getAdminDb();
-    const adminAuth = getAdminAuth();
     const body = await req.json().catch(() => null);
     const loginCode =
       typeof body?.loginCode === "string" ? body.loginCode.trim().toUpperCase() : "";
@@ -33,10 +33,12 @@ export async function POST(req: Request) {
     }
 
     // Mint a custom token so the child signs in as their own student uid.
-    const token = await adminAuth.createCustomToken(studentDoc.id, {
-      role: "student",
-      familyId: data.familyId,
-    });
+    // Emulator: use the Admin SDK. Production: sign directly with the service
+    // account (avoids loading firebase-admin/auth, which breaks on Vercel).
+    const claims = { role: "student", familyId: data.familyId };
+    const token = process.env.FIREBASE_AUTH_EMULATOR_HOST
+      ? await (await getAdminAuth()).createCustomToken(studentDoc.id, claims)
+      : signCustomToken(studentDoc.id, claims);
 
     return NextResponse.json({
       token,

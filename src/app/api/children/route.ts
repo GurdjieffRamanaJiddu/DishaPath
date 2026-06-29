@@ -31,7 +31,7 @@ export async function POST(req: Request) {
 
   let parentUid: string;
   try {
-    const decoded = await getAdminAuth().verifyIdToken(idToken);
+    const decoded = await (await getAdminAuth()).verifyIdToken(idToken);
     parentUid = decoded.uid;
   } catch {
     return NextResponse.json({ error: "invalid token" }, { status: 401 });
