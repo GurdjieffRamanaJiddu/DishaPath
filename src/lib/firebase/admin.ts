@@ -29,6 +29,12 @@ function buildOptions(): AppOptions {
   const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
   if (raw) {
     const parsed = JSON.parse(raw);
+    // Some hosts (e.g. pasting into a dashboard) store the private key with
+    // literal "\n" sequences instead of real newlines; normalize so cert() can
+    // parse the key.
+    if (typeof parsed.private_key === "string") {
+      parsed.private_key = parsed.private_key.replace(/\\n/g, "\n");
+    }
     return { credential: cert(parsed), projectId: parsed.project_id ?? projectId };
   }
   return { credential: applicationDefault(), projectId };
